@@ -1,0 +1,5 @@
+[
+  { "id": "dummy-a", "display_name": "ダミー参加者A", "sns_url": "https://example.com/dummy-a" },
+  { "id": "dummy-b", "display_name": "ダミー参加者B", "sns_url": "https://example.com/dummy-b" },
+  { "id": "dummy-c", "display_name": "ダミー参加者C", "sns_url": null }
+]

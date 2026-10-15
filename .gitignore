@@ -1,0 +1,12 @@
+# 秘密情報は絶対にコミットしない
+.env
+.env.*
+*.key
+*.pem
+supabase/.temp/
+supabase/.branches/
+# 参加者のメールアドレスや合言葉を含むファイルも置かない
+secrets/
+private/
+node_modules/
+.DS_Store
