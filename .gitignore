@@ -10,3 +10,6 @@ secrets/
 private/
 node_modules/
 .DS_Store
+
+# 公開用に組み立てたサイト（実際の写真を含む）。main には入れない
+dist/

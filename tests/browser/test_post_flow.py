@@ -19,7 +19,7 @@ def check(name, ok, detail=""):
 
 # ページ配信（リポジトリをそのまま）
 Handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(ROOT))
-Handler.log_message = lambda *a: None
+Handler.log_message = lambda self, *a: None
 srv = http.server.ThreadingHTTPServer(("127.0.0.1", PAGE_PORT), Handler)
 threading.Thread(target=srv.serve_forever, daemon=True).start()
 fn = subprocess.Popen(["node", "--experimental-strip-types", "--no-warnings", str(ROOT / "tests/browser/fake_functions_server.ts"),
