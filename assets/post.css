@@ -1,0 +1,96 @@
+/* 投稿画面・管理画面（style.css の色・文字の決まりを使う） */
+.post { max-width: 560px; margin: 0 auto; padding: 28px 16px 64px; }
+.back { margin: 0 0 24px; font-size: 14px; }
+.post-title { margin: 0 0 8px; font: 900 30px/1.3 var(--mincho); }
+.post .status { margin-bottom: 28px; }
+
+.step h2, .rules h2 { margin: 0 0 8px; font-size: 18px; font-weight: 700; }
+.step form { display: grid; gap: 8px; }
+.step label { font-weight: 700; font-size: 14px; margin-top: 10px; }
+.hint { margin: 0 0 6px; font-size: 13px; color: var(--basalt-2); }
+
+.post input[type="email"], .post input[type="text"], .post input[type="url"] {
+  width: 100%;
+  padding: 12px;
+  border: 1.5px solid var(--basalt-2);
+  border-radius: 0;
+  background: #fff;
+  color: var(--basalt);
+  font: inherit;
+  font-size: 16px;              /* iPhoneで入力時に拡大されないように */
+}
+.post input:focus { border-color: var(--basalt); }
+#code { letter-spacing: 0.3em; font-size: 22px; }
+
+.post button[type="submit"] {
+  margin-top: 14px;
+  padding: 14px 18px;
+  border: 0;
+  background: var(--basalt);
+  color: var(--ash);
+  font: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+}
+.post button[type="submit"]:disabled { background: var(--ash-2); color: var(--basalt-2); cursor: not-allowed; }
+.post button.link {
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--sea);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.post button.link:disabled { color: var(--basalt-2); text-decoration: none; cursor: default; }
+.sub-actions { display: flex; gap: 20px; margin: 18px 0 0; }
+
+.rules {
+  margin: 0 0 24px;
+  padding: 16px 18px;
+  border-left: 3px solid var(--camellia);
+  background: #F6F5F2;
+}
+.rules ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; font-size: 14px; }
+
+.consent { margin: 0; padding: 0; border: 0; display: grid; gap: 10px; }
+.consent legend { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+.consent label { display: grid; grid-template-columns: 24px 1fr; gap: 8px; align-items: start; font-weight: 400; margin: 0; }
+.consent input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--basalt); }
+
+.files-label { margin-top: 18px !important; }
+#files { font: inherit; font-size: 14px; }
+
+.queue { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.queue li { display: grid; grid-template-columns: 56px 1fr; gap: 10px; align-items: center; font-size: 13px; }
+.queue img { width: 56px; height: 56px; object-fit: cover; background: var(--ash-2); }
+.queue .ok { color: var(--sea); font-weight: 700; }
+.queue .ng { color: var(--camellia); font-weight: 700; }
+
+.profile { margin-top: 32px; font-size: 14px; }
+.profile summary { cursor: pointer; color: var(--sea); }
+
+.message {
+  margin: 20px 0 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--camellia);
+  background: #fff;
+  font-size: 14px;
+}
+.message.info { border-left-color: var(--sea); }
+
+/* 管理画面 */
+.admin { max-width: 1100px; }
+.admin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+.admin-card { background: #fff; font-size: 12px; }
+.admin-card img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+.admin-card .meta { padding: 6px 8px; display: grid; gap: 4px; }
+.admin-card.hidden-photo img { opacity: .35; }
+.admin-card .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.admin-panel { display: grid; gap: 8px; margin: 0 0 28px; padding: 16px; background: #fff; }
+.admin-panel .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.admin-panel input[type="text"] { flex: 1; min-width: 200px; }
+.admin-panel button { padding: 10px 14px; border: 1.5px solid var(--basalt); background: none; font: inherit; cursor: pointer; }

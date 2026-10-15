@@ -39,3 +39,12 @@ raw = (out / "gps.jpg").read_bytes()
 ex = Image.open(out / "gps.jpg").getexif().get_ifd(0x8825)
 assert ex.get(2) is not None, "GPSが入っていない"
 print("fixtures ok:", sorted(p.name for p in out.iterdir()))
+
+# 端末側の作り直しのテスト用
+ex = Image.Exif(); ex[0x0112] = 6   # 向き：90度回転して表示する写真（スマホの縦撮り）
+gps = ex.get_ifd(0x8825); gps[1] = "N"; gps[2] = (34.0, 44.0, 12.5)
+base(1600, 1067).save(out / "orient6.jpg", "JPEG", quality=85, exif=ex.tobytes())
+base(4032, 3024).save(out / "phone_4032.jpg", "JPEG", quality=80, exif=gps_exif())
+rgba = Image.new("RGBA", (900, 600), (0, 0, 0, 0)); ImageDraw.Draw(rgba).ellipse([100, 100, 500, 500], fill=(200, 40, 60, 255))
+rgba.save(out / "alpha.png", "PNG")
+print("extra fixtures ok")

@@ -7,5 +7,6 @@
   "submission_deadline_label": "10月31日（土）23:59",
   "submission_open": false,
   "source": "static",
-  "prototype": true
+  "prototype": true,
+  "max_photos_per_user": 20
 }

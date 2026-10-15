@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>管理画面</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/post.css">
+</head>
+<body>
+  <main class="post admin">
+    <p class="back"><a href="./">ギャラリーに戻る</a></p>
+    <h1 class="post-title">管理画面</h1>
+    <p class="status" id="status">読み込み中です</p>
+
+    <section class="step" id="step-email" hidden>
+      <form id="form-email" novalidate>
+        <label for="email">管理者のメールアドレス</label>
+        <input id="email" type="email" autocomplete="email" required>
+        <button type="submit">確認コードを送る</button>
+      </form>
+    </section>
+    <section class="step" id="step-code" hidden>
+      <form id="form-code" novalidate>
+        <label for="code">確認コード</label>
+        <input id="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required>
+        <button type="submit">確認する</button>
+      </form>
+    </section>
+
+    <section class="step" id="step-admin" hidden>
+      <div class="admin-panel">
+        <strong>受付</strong>
+        <div class="row">
+          <span id="accepting"></span>
+          <button type="button" id="open-on">受付を開始する</button>
+          <button type="button" id="open-off">受付を止める</button>
+        </div>
+        <strong>合言葉</strong>
+        <div class="row">
+          <input type="text" id="new-code" autocomplete="off" placeholder="新しい合言葉（8文字以上）">
+          <button type="button" id="set-code">設定する</button>
+          <button type="button" id="disable-code">無効にする</button>
+        </div>
+        <p class="hint">設定した合言葉は、この画面にも表示されません。控えは社長の手元にだけ残してください。</p>
+      </div>
+      <p class="count" id="count"></p>
+      <div class="admin-grid" id="grid"></div>
+      <p class="sub-actions"><button type="button" class="link" id="logout">ログアウト</button></p>
+    </section>
+
+    <p class="message" id="message" role="alert" hidden></p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="assets/admin.js" defer></script>
+</body>
+</html>

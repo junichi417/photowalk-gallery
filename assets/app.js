@@ -2,7 +2,7 @@
  *
  * データの取り方は loadGallery() の1か所にまとめてある。
  *  - いま（試作）と締切後の静的版：events/<slug>/ の JSON を読む（source: "static"）
- *  - 投稿受付中：Supabase から同じ形のデータを読む（source: "supabase"・次の段階で実装）
+ *  - 投稿受付中：Supabase から同じ形のデータを読む（source: "supabase"）
  * どちらも { event, participants, photos } の同じ形を返すので、画面側は変えなくてよい。
  */
 (() => {
@@ -34,8 +34,31 @@
     const event = await getJson(base + "event.json");
 
     if (event.source === "supabase") {
-      // 次の段階：Supabase の公開ビュー（非公開の写真を除いたもの）から読む
-      throw new Error("投稿受付版はまだ準備中です");
+      // 投稿受付中：Supabase の公開用の一覧（非公開・保存待ちの写真は含まれない）から読む
+      const sbc = site.supabase || {};
+      if (!sbc.url || !sbc.anon_key) throw new Error("ギャラリーの設定が未完了です");
+      const res = await fetch(`${sbc.url}/rest/v1/rpc/get_gallery`, {
+        method: "POST",
+        headers: { apikey: sbc.anon_key, "content-type": "application/json" },
+        body: JSON.stringify({ p_event: event.slug }),
+      });
+      if (!res.ok) throw new Error(`写真の一覧を読めませんでした（${res.status}）`);
+      const rows = await res.json();
+      const pub = (path) => `${sbc.url}/storage/v1/object/public/gallery/${path.split("/").map(encodeURIComponent).join("/")}`;
+      const people = new Map();
+      for (const r of rows) {
+        if (!people.has(r.participant_id)) {
+          people.set(r.participant_id, { id: r.participant_id, display_name: r.display_name, sns_url: r.sns_url });
+        }
+      }
+      return {
+        site, event,
+        participants: [...people.values()],
+        photos: rows.map((r) => ({
+          id: r.id, src: pub(r.full_path), thumb: pub(r.thumb_path),
+          width: r.width, height: r.height, alt: "", participant_id: r.participant_id,
+        })),
+      };
     }
 
     const [participants, photos] = await Promise.all([
@@ -45,7 +68,7 @@
     return {
       site, event,
       participants,
-      photos: photos.filter((p) => !p.hidden).map((p) => ({ ...p, src: base + p.src })),
+      photos: photos.filter((p) => !p.hidden).map((p) => ({ ...p, src: base + p.src, thumb: p.thumb ? base + p.thumb : base + p.src })),
     };
   }
 
@@ -105,7 +128,7 @@
       tile.setAttribute("aria-label", `${photo.alt || "写真"}${name ? `（${name}）` : ""}を拡大`);
 
       const img = document.createElement("img");
-      img.src = photo.src;
+      img.src = photo.thumb || photo.src;
       img.alt = photo.alt || "";
       img.width = photo.width;
       img.height = photo.height;

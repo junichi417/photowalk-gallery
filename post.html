@@ -4,39 +4,109 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>写真を投稿する</title>
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&family=Zen+Old+Mincho:wght@900&display=swap">
   <link rel="stylesheet" href="assets/style.css">
-  <style>
-    .post { max-width: 560px; margin: 0 auto; padding: 48px 16px; }
-    .post h1 { font-size: 22px; margin: 0 0 16px; }
-  </style>
+  <link rel="stylesheet" href="assets/post.css">
 </head>
 <body>
   <main class="post">
-    <h1>写真を投稿する</h1>
-    <!-- 次の段階でここに「合言葉 → メール認証 → 表示名・SNS → 同意 → アップロード」の画面が入る -->
-    <p class="status" id="status">写真の受付は準備中です</p>
-    <p><a href="./">ギャラリーに戻る</a></p>
+    <p class="back"><a href="./" id="back-link">ギャラリーに戻る</a></p>
+    <h1 class="post-title"><span id="ev-title">写真を投稿する</span></h1>
+    <p class="status" id="status" aria-live="polite">読み込み中です</p>
+
+    <!-- 1. メールアドレス -->
+    <section class="step" id="step-email" hidden>
+      <h2>メールアドレスで本人確認</h2>
+      <p class="hint">入力したアドレスに、6桁の確認コードが届きます。</p>
+      <form id="form-email" novalidate>
+        <label for="email">メールアドレス</label>
+        <input id="email" type="email" autocomplete="email" inputmode="email" required maxlength="254">
+        <button type="submit">確認コードを送る</button>
+      </form>
+    </section>
+
+    <!-- 2. 確認コード -->
+    <section class="step" id="step-code" hidden>
+      <h2>確認コードを入力</h2>
+      <p class="hint"><span id="sent-to"></span> に届いたコードを入力してください。届かないときは迷惑メールのフォルダも見てください。</p>
+      <form id="form-code" novalidate>
+        <label for="code">確認コード</label>
+        <input id="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,10}" maxlength="10" required>
+        <button type="submit">確認する</button>
+      </form>
+      <p class="sub-actions">
+        <button type="button" class="link" id="resend" disabled>コードを送り直す</button>
+        <button type="button" class="link" id="change-email">メールアドレスを変える</button>
+      </p>
+    </section>
+
+    <!-- 3. 合言葉で参加登録 -->
+    <section class="step" id="step-join" hidden>
+      <h2>参加登録</h2>
+      <p class="hint">フォトウォークの参加者に伝えている合言葉を入力してください。</p>
+      <form id="form-join" novalidate>
+        <label for="invite">合言葉</label>
+        <input id="invite" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" required maxlength="100">
+        <label for="name">表示名（任意）</label>
+        <input id="name" type="text" maxlength="30" autocomplete="nickname">
+        <label for="sns">SNSのURL（任意）</label>
+        <input id="sns" type="url" inputmode="url" maxlength="300" placeholder="https://">
+        <p class="hint">表示名とSNSのURLは、ギャラリーで誰でも見られます。空欄なら名前なしで掲載します。メールアドレスは表示しません。</p>
+        <button type="submit">参加登録する</button>
+      </form>
+    </section>
+
+    <!-- 4. 投稿 -->
+    <section class="step" id="step-post" hidden>
+      <div class="rules" id="rules">
+        <h2>投稿の前に読んでください</h2>
+        <ul>
+          <li>投稿した写真は、このギャラリーで<strong>誰でも見られます</strong>。保存（ダウンロード）される可能性もあります。</li>
+          <li>投稿できるのは、<strong>あなた自身が撮った</strong>今回のフォトウォークの写真です。</li>
+          <li><strong>人が写っている写真は、写っている全員から掲載の了承をもらってから</strong>投稿してください。</li>
+          <li>写真の位置情報などは、投稿時に自動で取り除きます。</li>
+          <li>運営の判断で、写真を非公開にしたり削除したりすることがあります。</li>
+          <li id="rule-contact">写真を消してほしいとき：<span id="removal-contact"></span></li>
+          <li>受付は<strong id="deadline-label"></strong>まで。締切後も写真はギャラリーに残ります。</li>
+        </ul>
+      </div>
+
+      <form id="form-post" novalidate>
+        <fieldset class="consent">
+          <legend>確認（両方にチェック）</legend>
+          <label><input type="checkbox" id="consent-own"> 自分で撮った写真です</label>
+          <label><input type="checkbox" id="consent-people"> 写っている人全員から掲載の了承をもらっています（人が写っていない場合もチェック）</label>
+        </fieldset>
+
+        <label for="files" class="files-label">写真を選ぶ</label>
+        <input id="files" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple>
+        <p class="hint">1枚10MBまで。<span id="quota"></span></p>
+
+        <ul class="queue" id="queue" aria-live="polite"></ul>
+        <button type="submit" id="submit-post" disabled>投稿する</button>
+      </form>
+
+      <details class="profile">
+        <summary>表示名・SNSを変える</summary>
+        <form id="form-profile" novalidate>
+          <label for="p-name">表示名（任意）</label>
+          <input id="p-name" type="text" maxlength="30">
+          <label for="p-sns">SNSのURL（任意）</label>
+          <input id="p-sns" type="url" inputmode="url" maxlength="300" placeholder="https://">
+          <button type="submit">保存する</button>
+        </form>
+      </details>
+      <p class="sub-actions"><button type="button" class="link" id="logout">ログアウト</button></p>
+    </section>
+
+    <p class="message" id="message" role="alert" hidden></p>
   </main>
-  <script>
-    // 表示だけの判定。投稿の可否は常にサーバー側で判定する
-    (async () => {
-      try {
-        const site = await (await fetch("site.json")).json();
-        const q = new URLSearchParams(location.search).get("e");
-        const slug = q && /^[a-z0-9-]{1,64}$/.test(q) ? q : site.default_event;
-        const ev = await (await fetch(`events/${slug}/event.json`)).json();
-        const s = document.getElementById("status");
-        if (Date.now() > Date.parse(ev.submission_deadline)) {
-          s.textContent = "写真の受付は終了しました";
-          s.classList.add("closed");
-        } else {
-          s.textContent = `写真の受付は準備中です（締切 ${ev.submission_deadline_label}）`;
-        }
-      } catch { /* 読めなければ初期表示のまま */ }
-    })();
-  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="assets/image-prep.js"></script>
+  <script src="assets/post.js" defer></script>
 </body>
 </html>
