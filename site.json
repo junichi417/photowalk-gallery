@@ -2,8 +2,8 @@
   "site_name": "時譜舎 フォトウォーク",
   "default_event": "izu-oshima-2026",
   "supabase": {
-    "url": "",
-    "anon_key": ""
+    "url": "https://aygraahssaduatuhfylb.supabase.co",
+    "anon_key": "sb_publishable_p2vxvgz8nmmi4NvQpf5m_w_ayEowXF7"
   },
   "removal_contact": ""
 }
