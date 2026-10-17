@@ -44,6 +44,18 @@
       });
       if (!res.ok) throw new Error(`写真の一覧を読めませんでした（${res.status}）`);
       const rows = await res.json();
+      // 「受付中」の表示は、サーバーの受付状態（スイッチと締切）に合わせる。読めなければ受付していない扱い
+      try {
+        const sres = await fetch(`${sbc.url}/rest/v1/rpc/get_event_status`, {
+          method: "POST",
+          headers: { apikey: sbc.anon_key, "content-type": "application/json" },
+          body: JSON.stringify({ p_event: event.slug }),
+        });
+        const st = sres.ok ? (await sres.json())[0] : null;
+        event.submission_open = !!(st && st.accepting);
+      } catch (_) {
+        event.submission_open = false;
+      }
       const pub = (path) => `${sbc.url}/storage/v1/object/public/gallery/${path.split("/").map(encodeURIComponent).join("/")}`;
       const people = new Map();
       for (const r of rows) {

@@ -65,7 +65,7 @@ def main():
 
     if a.mode == "live":
         site["supabase"] = {"url": url, "anon_key": a.anon_key}
-        event.update(source="supabase", submission_open=True)
+        event.update(source="supabase", submission_open=False)  # 表示は実行時にサーバーの受付状態から決める
         write_json(dist / "site.json", site)
         write_json(ev_path, event)
         print(f"live: {dist}（写真は Supabase から読む）")

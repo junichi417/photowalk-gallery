@@ -1,0 +1,64 @@
+# GitHub Pages への公開（手動実行のみ）
+#
+# - push では動かない。Actions タブの「Run workflow」からだけ公開できる
+# - 公開前に、環境 github-pages の「承認者」(社長)が承認するまで止まる設定を推奨（docs/PUBLISH.md）
+# - 履歴を持たない成果物(artifact)を公開するので、gh-pages ブランチの強制上書きは不要
+#   → 削除依頼で消した写真が、公開側の履歴に残らない
+name: publish-pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "live=投稿受付中の版 / archive=締切後の静的版(写真を全件保存)"
+        type: choice
+        options: [live, archive]
+        default: live
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: サイトを作る
+        run: |
+          URL=$(python -c "import json;print(json.load(open('site.json'))['supabase']['url'])")
+          KEY=$(python -c "import json;print(json.load(open('site.json'))['supabase']['anon_key'])")
+          python tools/build_site.py "${{ inputs.mode }}" --url "$URL" --anon-key "$KEY"
+      - name: 公開前の安全確認(秘密鍵・個人情報)
+        run: |
+          if grep -rqiE 'service_role|sb_secret_|app.?password|BEGIN (RSA |EC )?PRIVATE' dist; then
+            echo "dist に秘密鍵らしき文字列があります。公開を中止します" >&2; exit 1
+          fi
+          if grep -rqE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}' dist --include=*.html --include=*.js --include=*.json; then
+            echo "dist にメールアドレスらしき文字列があります。確認してください" >&2; exit 1
+          fi
+          if [ "${{ inputs.mode }}" = "live" ] && find dist -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | grep -q .; then
+            echo "live版に画像ファイルが入っています。公開を中止します" >&2; exit 1
+          fi
+          echo "公開するファイル:"; find dist -type f | sort
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
