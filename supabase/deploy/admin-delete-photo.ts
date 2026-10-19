@@ -24,12 +24,18 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return reply(405, { error: "method_not_allowed" });
 
   const auth = req.headers.get("authorization") ?? "";
+  if (!/^Bearer \S+/.test(auth)) return reply(401, { error: "not_authenticated" });
   const { photo_id } = await req.json().catch(() => ({}));
   if (!/^[0-9a-f-]{36}$/.test(String(photo_id ?? ""))) return reply(400, { error: "bad_request" });
 
   const asUser = createClient(URL_, ANON, { global: { headers: { Authorization: auth } }, auth: { persistSession: false } });
   const { data, error } = await asUser.rpc("admin_delete_photo", { p_photo_id: photo_id });
-  if (error) return reply(error.message.includes("admin_only") ? 403 : 500, { error: error.message });
+  if (error) {
+    // 権限がない（未ログイン・管理者でない）は 401/403。内部のエラー文は外に見せない
+    if (/admin_only|permission denied/i.test(error.message)) return reply(auth.endsWith(ANON) ? 401 : 403, { error: "forbidden" });
+    console.error("admin_delete_photo failed:", error.message);
+    return reply(500, { error: "internal_error" });
+  }
 
   const paths = (data ?? []).flatMap((r: { full_path: string; thumb_path: string }) => [r.full_path, r.thumb_path]);
   if (paths.length) {
