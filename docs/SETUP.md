@@ -33,7 +33,7 @@
 | 項目 | 入れる値 |
 | --- | --- |
 | Sender email | 送信元の Gmail アドレス |
-| Sender name | 時譜舎 フォトウォーク |
+| Sender name | 時譜舎 写真帖 |
 | Host | `smtp.gmail.com` |
 | Port | `465` |
 | Username | 送信元の Gmail アドレス |
@@ -41,10 +41,10 @@
 
 **3-3. メールの文面を「6桁のコード」にする**
 Authentication → Emails → Templates で、**Magic Link** と **Confirm signup** の2つを次のように変える。
-- 件名：`【時譜舎フォトウォーク】確認コード`
+- 件名：`【時譜舎写真帖】確認コード`
 - 本文：
 ```html
-<p>時譜舎フォトウォークの写真投稿ページで、次の確認コードを入力してください。</p>
+<p>時譜舎写真帖の写真投稿ページで、次の確認コードを入力してください。</p>
 <p style="font-size:24px;letter-spacing:4px"><strong>{{ .Token }}</strong></p>
 <p>このメールに心当たりがない場合は、何もせずに削除してください。</p>
 ```
