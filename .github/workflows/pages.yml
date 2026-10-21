@@ -45,8 +45,8 @@ jobs:
           if grep -rqE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}' dist --include=*.html --include=*.js --include=*.json; then
             echo "dist にメールアドレスらしき文字列があります。確認してください" >&2; exit 1
           fi
-          if [ "${{ inputs.mode }}" = "live" ] && find dist -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | grep -q .; then
-            echo "live版に画像ファイルが入っています。公開を中止します" >&2; exit 1
+          if [ "${{ inputs.mode }}" = "live" ] && find dist -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) ! -path 'dist/assets/hero.jpg' | grep -q .; then
+            echo "live版に画像ファイルが入っています(トップ写真 assets/hero.jpg だけは許可)。公開を中止します" >&2; exit 1
           fi
           echo "公開するファイル:"; find dist -type f | sort
       - uses: actions/upload-pages-artifact@v3
