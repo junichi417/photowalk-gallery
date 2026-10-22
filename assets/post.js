@@ -93,6 +93,7 @@
     $("p-name").value = me.display_name || "";
     $("p-sns").value = me.sns_url || "";
     await refreshQuota();
+    await loadMine();
     show("step-post");
   }
 
@@ -159,6 +160,56 @@
     $("quota").textContent = `投稿済み ${count || 0}枚／あと${remaining}枚まで投稿できます。`;
   }
 
+  // 自分の投稿の一覧と取り消し（受付の間だけ・自分の掲載中の写真だけ。判定はサーバー側）
+  const publicUrl = (path) => `${sbConf.url}/storage/v1/object/public/gallery/${path.split("/").map(encodeURIComponent).join("/")}`;
+  async function loadMine() {
+    const { data, error } = await sb.from("photos").select("id, thumb_path, status, created_at")
+      .eq("event_slug", event.slug).neq("status", "pending").order("created_at", { ascending: false });
+    const list = $("mine-list");
+    if (error || !data || data.length === 0) { $("mine").hidden = true; list.replaceChildren(); return; }
+    $("mine").hidden = false;
+    list.replaceChildren(...data.map((r) => {
+      const li = document.createElement("li");
+      const img = document.createElement("img");
+      img.src = publicUrl(r.thumb_path); img.alt = ""; img.loading = "lazy";
+      const state = document.createElement("span");
+      state.className = "mine-state";
+      li.append(img, state);
+      if (r.status === "published") {
+        state.textContent = "掲載中";
+        const btn = document.createElement("button");
+        btn.type = "button"; btn.className = "link"; btn.textContent = "取り消す";
+        btn.onclick = () => cancelPhoto(r.id, btn);
+        li.append(btn);
+      } else {
+        state.textContent = "運営が非公開にしています";
+      }
+      return li;
+    }));
+  }
+
+  async function cancelPhoto(id, btn) {
+    if (!confirm("この写真を取り消します。ギャラリーから消え、元に戻せません。よろしいですか？")) return;
+    btn.disabled = true;
+    say("");
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) throw new Error("ログインし直してください");
+      const res = await fetch(`${sbConf.url}/functions/v1/delete-my-photo`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}`, apikey: sbConf.anon_key, "content-type": "application/json" },
+        body: JSON.stringify({ photo_id: id }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.message || "取り消せませんでした");
+      say("写真を取り消しました", "info");
+    } catch (err) {
+      say(err.message || "取り消せませんでした");
+    }
+    await refreshQuota();
+    await loadMine();
+  }
+
   const consentOk = () => $("consent-own").checked && $("consent-people").checked;
   const updateSubmit = () => ($("submit-post").disabled = !(consentOk() && $("files").files.length > 0));
   ["consent-own", "consent-people", "files"].forEach((id) => $(id).addEventListener("change", updateSubmit));
@@ -216,6 +267,7 @@
 
     $("files").value = "";
     await refreshQuota();
+    await loadMine();
     updateSubmit();
     if (okCount > 0) say(`${okCount}枚をギャラリーに掲載しました`, "info");
   });

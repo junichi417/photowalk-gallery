@@ -29,6 +29,7 @@ def build():
         "upload-photo.ts": HEADER + imports + "\n// ---- _shared/jpeg.ts ----\n" + jpeg +
                            "\n// ---- _shared/upload_handler.ts ----\n" + handler + "\n// ---- upload-photo/index.ts ----\n" + index,
         "admin-delete-photo.ts": HEADER + (FN / "admin-delete-photo/index.ts").read_text(encoding="utf-8"),
+        "delete-my-photo.ts": HEADER + (FN / "delete-my-photo/index.ts").read_text(encoding="utf-8"),
     }
 
 files = build()

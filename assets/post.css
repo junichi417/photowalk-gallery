@@ -94,3 +94,11 @@
 .admin-panel .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .admin-panel input[type="text"] { flex: 1; min-width: 200px; }
 .admin-panel button { padding: 10px 14px; border: 1.5px solid var(--basalt); background: none; font: inherit; cursor: pointer; }
+
+/* あなたの投稿（取り消し） */
+.mine { margin-top: 28px; }
+.mine h2 { font-size: 16px; margin: 0 0 6px; }
+.mine-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.mine-list li { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: center; font-size: 13px; }
+.mine-list img { width: 56px; height: 56px; object-fit: cover; background: var(--ash-2); }
+.mine-state { color: var(--basalt-2); }
