@@ -102,3 +102,4 @@
 .mine-list li { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: center; font-size: 13px; }
 .mine-list img { width: 56px; height: 56px; object-fit: cover; background: var(--ash-2); }
 .mine-state { color: var(--basalt-2); }
+.mine-actions { display: flex; gap: 14px; align-items: center; }

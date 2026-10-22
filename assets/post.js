@@ -160,6 +160,39 @@
     $("quota").textContent = `投稿済み ${count || 0}枚／あと${remaining}枚まで投稿できます。`;
   }
 
+
+  // 準備した写真をサーバーへ送る（投稿ボタンと「入れ替える」で共用）。失敗したら Error を投げる
+  async function uploadPrepared(prepared) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) throw new Error("ログインし直してください");
+    const fd = new FormData();
+    fd.set("event", event.slug);
+    fd.set("consent_own_photo", "true");
+    fd.set("consent_people", "true");
+    fd.set("full", prepared.full, "full.jpg");
+    fd.set("thumb", prepared.thumb, "thumb.jpg");
+    const res = await fetch(`${sbConf.url}/functions/v1/upload-photo`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}`, apikey: sbConf.anon_key },
+      body: fd,
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.message || "投稿できませんでした");
+  }
+
+  // 自分の写真を取り消す（確認ダイアログは呼ぶ側）。失敗したら Error を投げる
+  async function requestDelete(id) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) throw new Error("ログインし直してください");
+    const res = await fetch(`${sbConf.url}/functions/v1/delete-my-photo`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${session.access_token}`, apikey: sbConf.anon_key, "content-type": "application/json" },
+      body: JSON.stringify({ photo_id: id }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.message || "取り消せませんでした");
+  }
+
   // 自分の投稿の一覧と取り消し（受付の間だけ・自分の掲載中の写真だけ。判定はサーバー側）
   const publicUrl = (path) => `${sbConf.url}/storage/v1/object/public/gallery/${path.split("/").map(encodeURIComponent).join("/")}`;
   async function loadMine() {
@@ -180,7 +213,17 @@
         const btn = document.createElement("button");
         btn.type = "button"; btn.className = "link"; btn.textContent = "取り消す";
         btn.onclick = () => cancelPhoto(r.id, btn);
-        li.append(btn);
+        const rep = document.createElement("button");
+        rep.type = "button"; rep.className = "link"; rep.textContent = "入れ替える";
+        const pick = document.createElement("input");
+        pick.type = "file"; pick.hidden = true;
+        pick.accept = "image/jpeg,image/png,image/webp,image/heic,image/heif";
+        pick.onchange = () => { const f = pick.files && pick.files[0]; pick.value = ""; if (f) replacePhoto(r.id, f, rep); };
+        rep.onclick = () => { if (!consentOk()) return say("先に、上の「確認（両方にチェック）」を入れてください"); pick.click(); };
+        const acts = document.createElement("span");
+        acts.className = "mine-actions";
+        acts.append(rep, btn, pick);
+        li.append(acts);
       } else {
         state.textContent = "運営が非公開にしています";
       }
@@ -193,21 +236,44 @@
     btn.disabled = true;
     say("");
     try {
-      const { data: { session } } = await sb.auth.getSession();
-      if (!session) throw new Error("ログインし直してください");
-      const res = await fetch(`${sbConf.url}/functions/v1/delete-my-photo`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${session.access_token}`, apikey: sbConf.anon_key, "content-type": "application/json" },
-        body: JSON.stringify({ photo_id: id }),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.message || "取り消せませんでした");
+      await requestDelete(id);
       say("写真を取り消しました", "info");
     } catch (err) {
       say(err.message || "取り消せませんでした");
     }
     await refreshQuota();
     await loadMine();
+  }
+
+  // 入れ替え：新しい写真を先に準備・投稿し、成功してから古い写真を取り消す（失敗しても古い写真は残る）。
+  // 枠がいっぱい（20枚）のときだけ、先に古い写真を取り消す
+  async function replacePhoto(oldId, file, btn) {
+    say("");
+    if (!consentOk()) return say("先に、上の「確認（両方にチェック）」を入れてください");
+    btn.disabled = true;
+    try {
+      let prepared;
+      try { prepared = await window.ImagePrep.prepareImage(file); }
+      catch (err) { throw new Error(`${file.name}：${err.message || "この写真は使えません"}`); }
+
+      if (remaining > 0) {
+        await uploadPrepared(prepared);                       // 先に新しい写真
+        try { await requestDelete(oldId); }
+        catch (err) { say(`新しい写真は掲載しました。古い写真の取り消しに失敗したので、もう一度「取り消す」を押してください（${err.message}）`); return; }
+        say("写真を入れ替えました", "info");
+      } else {
+        if (!confirm("投稿の枠がいっぱいなので、先に今の写真を取り消してから、新しい写真を投稿します。元に戻せません。よろしいですか？")) return;
+        await requestDelete(oldId);
+        try { await uploadPrepared(prepared); }
+        catch (err) { say(`古い写真は取り消しました。新しい写真は投稿できませんでした。もう一度投稿してください（${err.message}）`); return; }
+        say("写真を入れ替えました", "info");
+      }
+    } catch (err) {
+      say(err.message || "入れ替えできませんでした");
+    } finally {
+      await refreshQuota();
+      await loadMine();
+    }
   }
 
   const consentOk = () => $("consent-own").checked && $("consent-people").checked;
@@ -240,21 +306,7 @@
         thumb.src = URL.createObjectURL(prepared.thumb);
         label.textContent = `${file.name}：送信中`;
 
-        const { data: { session } } = await sb.auth.getSession();
-        if (!session) throw new Error("ログインし直してください");
-        const fd = new FormData();
-        fd.set("event", event.slug);
-        fd.set("consent_own_photo", "true");
-        fd.set("consent_people", "true");
-        fd.set("full", prepared.full, "full.jpg");
-        fd.set("thumb", prepared.thumb, "thumb.jpg");
-        const res = await fetch(`${sbConf.url}/functions/v1/upload-photo`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${session.access_token}`, apikey: sbConf.anon_key },
-          body: fd,
-        });
-        const body = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(body.message || "投稿できませんでした");
+        await uploadPrepared(prepared);
         label.textContent = `${file.name}：掲載しました`;
         label.className = "ok";
         okCount++;
