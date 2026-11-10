@@ -14,6 +14,10 @@ on:
         type: choice
         options: [live, archive]
         default: live
+      event:
+        description: "対象イベントの slug(空なら site.json の default_event)"
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -36,7 +40,11 @@ jobs:
         run: |
           URL=$(python -c "import json;print(json.load(open('site.json'))['supabase']['url'])")
           KEY=$(python -c "import json;print(json.load(open('site.json'))['supabase']['anon_key'])")
-          python tools/build_site.py "${{ inputs.mode }}" --url "$URL" --anon-key "$KEY"
+          if [ -n "${{ inputs.event }}" ]; then
+            python tools/build_site.py "${{ inputs.mode }}" --url "$URL" --anon-key "$KEY" --event "${{ inputs.event }}"
+          else
+            python tools/build_site.py "${{ inputs.mode }}" --url "$URL" --anon-key "$KEY"
+          fi
       - name: 公開前の安全確認(秘密鍵・個人情報)
         run: |
           if grep -rqiE 'service_role|sb_secret_|app.?password|BEGIN (RSA |EC )?PRIVATE' dist; then
@@ -45,8 +53,8 @@ jobs:
           if grep -rqE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}' dist --include=*.html --include=*.js --include=*.json; then
             echo "dist にメールアドレスらしき文字列があります。確認してください" >&2; exit 1
           fi
-          if [ "${{ inputs.mode }}" = "live" ] && find dist -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) ! -path 'dist/assets/hero.jpg' | grep -q .; then
-            echo "live版に画像ファイルが入っています(トップ写真 assets/hero.jpg だけは許可)。公開を中止します" >&2; exit 1
+          if [ "${{ inputs.mode }}" = "live" ] && find dist -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) ! -path 'dist/assets/hero.jpg' ! -path 'dist/events/*/hero.jpg' ! -path 'dist/events/*/ogp.jpg' | grep -q .; then
+            echo "live版に画像ファイルが入っています(トップ写真 assets/hero.jpg と、イベントのトップ写真・OGP画像 events/*/hero.jpg・events/*/ogp.jpg だけは許可)。公開を中止します" >&2; exit 1
           fi
           echo "公開するファイル:"; find dist -type f | sort
       - uses: actions/upload-pages-artifact@v3
