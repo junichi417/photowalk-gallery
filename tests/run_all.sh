@@ -13,5 +13,6 @@ run "端末側の写真の作り直し（ブラウザ）" python3 tests/browser/
 run "投稿画面の流れ（ブラウザ）" python3 tests/browser/test_post_flow.py "$FX"
 run "締切後の保存・削除依頼・公開" python3 tests/test_archive.py "$FX"
 run "小豆島イベントの追加" python3 tests/test_shodoshima.py "$FX"
+run "複数イベントの同時公開" python3 tests/test_publish.py "$FX"
 echo; [ $fail -eq 0 ] && echo "すべて合格" || echo "不合格あり"
 exit $fail
