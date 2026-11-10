@@ -18,6 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 CODE = ["index.html", "post.html", "admin.html", "assets", "site.json"]
+SITE_BASE_URL = "https://junichi417.github.io/photowalk-gallery/"
 
 def http_json(url, anon, body):
     req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST",
@@ -40,7 +41,67 @@ def copy_code(dist, slug):
         (shutil.copytree if src.is_dir() else shutil.copy2)(src, dist / name)
     (dist / "events" / slug).mkdir(parents=True)
     shutil.copy2(ROOT / "events" / slug / "event.json", dist / "events" / slug / "event.json")
+    # イベント固有のトップ写真・OGP画像（あれば）も公開側へ。live版の画像チェックの例外は
+    # .github/workflows/pages.yml 側で events/*/hero.jpg と events/*/ogp.jpg を許可している
+    event = json.loads((ROOT / "events" / slug / "event.json").read_text(encoding="utf-8"))
+    for key in ("hero_image", "ogp_image"):
+        name = event.get(key)
+        if name and (ROOT / "events" / slug / name).exists():
+            shutil.copy2(ROOT / "events" / slug / name, dist / "events" / slug / name)
     (dist / ".nojekyll").write_text("")
+
+def write_event_page(dist, slug):
+    """イベント専用の静的ページ（<slug>/index.html）を書き出す。
+
+    X は JavaScript を実行しないため、?e=<slug> のままでは伊豆大島の OGP しか出ない。
+    このページはイベント専用の OGP を静的に持ち、人はギャラリー（?e=<slug>）へ案内する。
+    live / archive のどちらでも出す。
+    """
+    import html as _html
+    site = json.loads((ROOT / "site.json").read_text(encoding="utf-8"))
+    event = json.loads((ROOT / "events" / slug / "event.json").read_text(encoding="utf-8"))
+    title = event.get("full_title") or event["title"] + (f" {event['subtitle']}" if event.get("subtitle") else "")
+    full_title = f"{site['site_name']}｜{title}"
+    desc = event.get("ogp_description") or f"{title}（{event.get('dates_label', '')}）の写真ギャラリー"
+    page_url = f"{SITE_BASE_URL}{slug}/"
+    ogp_name = event.get("ogp_image")
+    if ogp_name and (dist / "events" / slug / ogp_name).exists():
+        image_url, iw, ih = f"{SITE_BASE_URL}events/{slug}/{ogp_name}", 1200, 630
+    else:
+        image_url, iw, ih = f"{SITE_BASE_URL}assets/hero.jpg", 1200, 800
+    gallery_url = f"../?e={slug}"
+    e = _html.escape
+    page = f"""<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{e(full_title)}</title>
+  <meta name="description" content="{e(desc)}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{e(site['site_name'])}">
+  <meta property="og:title" content="{e(full_title)}">
+  <meta property="og:description" content="{e(desc)}">
+  <meta property="og:url" content="{e(page_url)}">
+  <meta property="og:image" content="{e(image_url)}">
+  <meta property="og:image:width" content="{iw}">
+  <meta property="og:image:height" content="{ih}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{e(full_title)}">
+  <meta name="twitter:image" content="{e(image_url)}">
+</head>
+<body>
+  <h1>{e(full_title)}</h1>
+  <p>{e(desc)}</p>
+  <p><a href="{e(gallery_url)}">ギャラリーを見る</a></p>
+  <script>location.replace({json.dumps(gallery_url)});</script>
+</body>
+</html>
+"""
+    out = dist / slug
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "index.html").write_text(page, encoding="utf-8")
+    print(f"event page: {out / 'index.html'}（OGP: {image_url}）")
 
 def write_json(path, data):
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -68,6 +129,7 @@ def main():
         event.update(source="supabase", submission_open=False)  # 表示は実行時にサーバーの受付状態から決める
         write_json(dist / "site.json", site)
         write_json(ev_path, event)
+        write_event_page(dist, slug)
         print(f"live: {dist}（写真は Supabase から読む）")
         return
 
@@ -98,6 +160,7 @@ def main():
     write_json(dist / "events" / slug / "photos.json", photos)
     write_json(dist / "events" / slug / "participants.json", list(people.values()))
     write_json(dist / "events" / slug / "manifest.json", {"event": slug, "count": len(photos), "files": manifest})
+    write_event_page(dist, slug)
     total = sum(m["bytes"] for m in manifest)
     print(f"archive: {dist} に {len(photos)} 枚（{total / 1024 / 1024:.1f}MB）")
 
