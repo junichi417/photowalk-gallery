@@ -1,0 +1,114 @@
+[
+  {
+    "id": "p01",
+    "src": "photos/placeholder-01.jpg",
+    "width": 1600,
+    "height": 1067,
+    "alt": "仮画像（裏砂漠）",
+    "participant_id": "dummy-a"
+  },
+  {
+    "id": "p02",
+    "src": "photos/placeholder-02.jpg",
+    "width": 1067,
+    "height": 1600,
+    "alt": "仮画像（海）",
+    "participant_id": "dummy-b"
+  },
+  {
+    "id": "p03",
+    "src": "photos/placeholder-03.jpg",
+    "width": 1600,
+    "height": 1200,
+    "alt": "仮画像（夕景）",
+    "participant_id": "dummy-c"
+  },
+  {
+    "id": "p04",
+    "src": "photos/placeholder-04.jpg",
+    "width": 1200,
+    "height": 1600,
+    "alt": "仮画像（街並み）",
+    "participant_id": "dummy-a"
+  },
+  {
+    "id": "p05",
+    "src": "photos/placeholder-05.jpg",
+    "width": 1600,
+    "height": 900,
+    "alt": "仮画像（ポートレート）",
+    "participant_id": "dummy-b"
+  },
+  {
+    "id": "p06",
+    "src": "photos/placeholder-06.jpg",
+    "width": 1400,
+    "height": 1400,
+    "alt": "仮画像（裏砂漠）",
+    "participant_id": "dummy-c"
+  },
+  {
+    "id": "p07",
+    "src": "photos/placeholder-07.jpg",
+    "width": 1600,
+    "height": 1067,
+    "alt": "仮画像（海）",
+    "participant_id": "dummy-a"
+  },
+  {
+    "id": "p08",
+    "src": "photos/placeholder-08.jpg",
+    "width": 1067,
+    "height": 1600,
+    "alt": "仮画像（夕景）",
+    "participant_id": "dummy-b"
+  },
+  {
+    "id": "p09",
+    "src": "photos/placeholder-09.jpg",
+    "width": 1600,
+    "height": 1200,
+    "alt": "仮画像（街並み）",
+    "participant_id": "dummy-c"
+  },
+  {
+    "id": "p10",
+    "src": "photos/placeholder-10.jpg",
+    "width": 1200,
+    "height": 1600,
+    "alt": "仮画像（ポートレート）",
+    "participant_id": "dummy-a"
+  },
+  {
+    "id": "p11",
+    "src": "photos/placeholder-11.jpg",
+    "width": 1600,
+    "height": 900,
+    "alt": "仮画像（裏砂漠）",
+    "participant_id": "dummy-b"
+  },
+  {
+    "id": "p12",
+    "src": "photos/placeholder-12.jpg",
+    "width": 1400,
+    "height": 1400,
+    "alt": "仮画像（海）",
+    "participant_id": "dummy-c"
+  },
+  {
+    "id": "p13",
+    "src": "photos/placeholder-13.jpg",
+    "width": 1600,
+    "height": 1067,
+    "alt": "仮画像（夕景）",
+    "participant_id": null
+  },
+  {
+    "id": "p14",
+    "src": "photos/placeholder-14.jpg",
+    "width": 1067,
+    "height": 1600,
+    "alt": "仮画像（街並み）",
+    "participant_id": null
+  }
+]

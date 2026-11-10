@@ -263,11 +263,22 @@
       state.byId = new Map(data.participants.map((p) => [p.id, p]));
 
       const ev = data.event;
-      document.title = `${ev.title}${ev.subtitle ? " " + ev.subtitle : ""}｜${data.site.site_name}`;
+      document.title = `${ev.full_title || ev.title + (ev.subtitle ? " " + ev.subtitle : "")}｜${data.site.site_name}`;
       $("ev-title").textContent = ev.title;
       $("ev-subtitle").textContent = ev.subtitle || "";
       $("ev-dates").textContent = ev.dates_label || "";
       $("site-name").textContent = data.site.site_name;
+      // トップ写真はイベントごとに差し替える（指定がなければ伊豆大島の既定のまま）
+      if (ev.hero_image) {
+        const hero = $("hero-img");
+        hero.src = `events/${ev.slug}/${ev.hero_image}`;
+        hero.alt = ev.hero_alt || "";
+        hero.removeAttribute("width");
+        hero.removeAttribute("height");
+        const cap = $("hero-caption");
+        cap.textContent = ev.hero_credit || "";
+        cap.hidden = !ev.hero_credit;
+      }
       $("proto-note").hidden = !ev.prototype;
       $("post-btn").href = `post.html?e=${encodeURIComponent(ev.slug)}`;
 

@@ -46,3 +46,16 @@
 - `events/<新しいイベント名>/event.json` を作る
 - SQL Editor で `insert into public.events (slug, title, submission_deadline) values (...)`
 - 同じ Supabase・同じ仕組みで動く（無料枠は全イベントの合計）
+
+### 小豆島（shodoshima-2026）の状況（2026-11-10 時点）
+- `events/shodoshima-2026/` を追加済み（写真・名前は仮のもの）。投稿締切は 2026-11-30 23:59
+- Supabase への追加 SQL は `supabase/migrations/20261110000000_shodoshima_event.sql`（社長が SQL Editor で実行する。まだ本番には入っていない）
+- 無料枠の実測（2026-11-10、公開APIで確認）：伊豆大島の公開写真53枚で 28.2MB。小豆島が上限300枚でも約160MB、合計でも約188MB／1GB で余裕がある
+- 合言葉は小豆島用に社長が管理画面で新規設定（伊豆大島と共用しない。値はリポジトリにもチャットにも書かない）
+- 受付開始日と公開（12月以降）は社長の承認後。トップ写真は社長選定の写真に差し替え済み（2026-11-10、EXIF除去・再エンコード済み）。OGPは幅いっぱい・上寄せの 1200×630 切り抜きで、3人・ピースの手・帆船・島が切れていないことを確認済み
+
+## 同時公開（伊豆大島=静的版 ＋ 小豆島=受付中）
+- `tools/build_site.py publish --plan izu-oshima-2026:archive,shodoshima-2026:live` で、1つの dist に両イベントが入る（Actions の初期値もこれ）。
+- site.json の Supabase 設定は live のイベント用に入るが、静的版のイベントは event.json の `source: "static"` で読み分けるため影響を受けない（assets/app.js が source で分岐）。
+- 公開前の画像チェックは置き場所で判定する：サイトのトップ写真、イベントの hero.jpg/ogp.jpg、伊豆大島の静的版の写真（events/izu-oshima-2026/photos/）だけ許可。
+- 伊豆大島の manifest.json（写真の sha256 一覧）は公開中のものと一致することを確認してから公開する。

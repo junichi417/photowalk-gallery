@@ -8,7 +8,9 @@
   const show = (s) => ["step-email", "step-code", "step-admin"].forEach((x) => ($(x).hidden = x !== s));
 
   const site = await (await fetch("site.json", { cache: "no-cache" })).json();
-  const slug = site.default_event;
+  // ?e=<イベント名> でイベントを切り替える（post.js と同じ。指定がなければ従来どおり default_event）
+  const asked = new URLSearchParams(location.search).get("e");
+  const slug = asked && /^[a-z0-9-]{1,64}$/.test(asked) ? asked : site.default_event;
   const conf = site.supabase || {};
   if (!conf.url || !conf.anon_key || !window.supabase) { $("status").textContent = "Supabaseの設定が未完了です"; return; }
   const sb = window.supabase.createClient(conf.url, conf.anon_key);

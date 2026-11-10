@@ -10,10 +10,18 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "live=投稿受付中の版 / archive=締切後の静的版(写真を全件保存)"
+        description: "publish=複数イベントの同時公開(通常はこちら) / live・archive=1イベントだけの公開"
         type: choice
-        options: [live, archive]
-        default: live
+        options: [publish, live, archive]
+        default: publish
+      plan:
+        description: "publish 用: イベントごとに slug:live または slug:archive をカンマ区切りで"
+        type: string
+        default: "izu-oshima-2026:archive,shodoshima-2026:live"
+      event:
+        description: "live・archive 用の対象イベントの slug(空なら site.json の default_event)"
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -36,7 +44,13 @@ jobs:
         run: |
           URL=$(python -c "import json;print(json.load(open('site.json'))['supabase']['url'])")
           KEY=$(python -c "import json;print(json.load(open('site.json'))['supabase']['anon_key'])")
-          python tools/build_site.py "${{ inputs.mode }}" --url "$URL" --anon-key "$KEY"
+          if [ "${{ inputs.mode }}" = "publish" ]; then
+            python tools/build_site.py publish --plan "${{ inputs.plan }}" --url "$URL" --anon-key "$KEY"
+          elif [ -n "${{ inputs.event }}" ]; then
+            python tools/build_site.py "${{ inputs.mode }}" --url "$URL" --anon-key "$KEY" --event "${{ inputs.event }}"
+          else
+            python tools/build_site.py "${{ inputs.mode }}" --url "$URL" --anon-key "$KEY"
+          fi
       - name: 公開前の安全確認(秘密鍵・個人情報)
         run: |
           if grep -rqiE 'service_role|sb_secret_|app.?password|BEGIN (RSA |EC )?PRIVATE' dist; then
@@ -45,8 +59,11 @@ jobs:
           if grep -rqE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}' dist --include=*.html --include=*.js --include=*.json; then
             echo "dist にメールアドレスらしき文字列があります。確認してください" >&2; exit 1
           fi
-          if [ "${{ inputs.mode }}" = "live" ] && find dist -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) ! -path 'dist/assets/hero.jpg' | grep -q .; then
-            echo "live版に画像ファイルが入っています(トップ写真 assets/hero.jpg だけは許可)。公開を中止します" >&2; exit 1
+          # 画像の許可は置き場所で決める（モードでは決めない。同時公開でも同じ強さにする）:
+          #   サイトのトップ写真 / 各イベントのトップ写真・OGP画像 / 伊豆大島の静的版の写真だけ。
+          #   伊豆大島以外のイベントの写真や、それ以外の場所の画像が混ざっていたら止める。
+          if find dist -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) ! -path 'dist/assets/hero.jpg' ! -path 'dist/events/*/hero.jpg' ! -path 'dist/events/*/ogp.jpg' ! -path 'dist/events/izu-oshima-2026/photos/*' | grep -q .; then
+            echo "許可されていない画像ファイルが dist に入っています(許可: トップ写真 assets/hero.jpg / イベントのトップ写真・OGP画像 events/*/hero.jpg・events/*/ogp.jpg / 伊豆大島の静的版の写真 events/izu-oshima-2026/photos/ だけ)。公開を中止します" >&2; exit 1
           fi
           echo "公開するファイル:"; find dist -type f | sort
       - uses: actions/upload-pages-artifact@v3
